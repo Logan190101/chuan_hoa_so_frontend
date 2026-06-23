@@ -2,6 +2,10 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+Create `.env.local` from `.env.example` and set `NEXT_PUBLIC_API_URL` to the backend's
+public base URL. The login form calls `POST /api/v1/auth/login`, stores the returned JWT
+in browser local storage, then redirects to `/audit`.
+
 First, run the development server:
 
 ```bash
