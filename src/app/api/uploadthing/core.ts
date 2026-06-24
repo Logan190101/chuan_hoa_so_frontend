@@ -1,14 +1,17 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 
-const uploadthing = createUploadthing();
+const uploadthing = createUploadthing({
+  errorFormatter: ({ code, message }) => ({ code, message }),
+});
 const spreadsheetExtensions = [".csv", ".xlsx"];
+const maxSpreadsheetFileSize = "32MB";
 
 export const uploadRouter = {
   auditSpreadsheet: uploadthing({
-    // UploadThing requires a route maximum. This deliberately uses its highest
-    // configurable value; the effective ceiling is determined by the account plan.
-    blob: { maxFileCount: 1, maxFileSize: "1024GB" },
+    // This is embedded in the presigned URL. It must be a sensible route limit,
+    // not a theoretical storage quota.
+    blob: { maxFileCount: 1, maxFileSize: maxSpreadsheetFileSize },
   })
     .middleware(({ files }) => {
       const isSpreadsheet = files.every((file) =>
@@ -20,6 +23,13 @@ export const uploadRouter = {
       }
 
       return {};
+    })
+    .onUploadError(({ error, fileKey }) => {
+      console.error("UploadThing spreadsheet upload failed", {
+        code: error.code,
+        fileKey,
+        message: error.message,
+      });
     })
     .onUploadComplete(({ file }) => ({ url: file.ufsUrl })),
 } satisfies FileRouter;
