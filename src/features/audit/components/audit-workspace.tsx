@@ -1,19 +1,48 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button, IconButton } from "@/components/core/button";
 import { BellIcon, CircleUserIcon, InfoIcon, MenuIcon, PlayIcon } from "@/components/core/icons";
 import { Select } from "@/components/core/select";
 import { AuditSidebar } from "@/features/audit/components/audit-sidebar";
 import { FileDropzone } from "@/features/audit/components/file-dropzone";
+import { createAuditRun } from "@/features/audit/lib/audit-api";
+import { useUploadThing } from "@/lib/uploadthing";
 
 const domains = [{ label: "Giáo dục", value: "education" }];
 
 export function AuditWorkspace() {
   const [domain, setDomain] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
+  const { startUpload, isUploading } = useUploadThing("auditSpreadsheet");
   const canStartAudit = Boolean(domain && file);
+
+  async function startAudit() {
+    if (!file || !domain || isSubmitting || isUploading) return;
+
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const uploadedFiles = await startUpload([file]);
+      const uploadedFile = uploadedFiles?.[0];
+      const fileUrl = uploadedFile?.serverData?.url ?? uploadedFile?.ufsUrl;
+
+      if (!fileUrl) throw new Error("Tải file lên thất bại. Vui lòng thử lại.");
+
+      const auditRun = await createAuditRun({ domain, fileUrl });
+      router.push(`/audit/results?requestId=${encodeURIComponent(auditRun.requestId)}`);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Đã xảy ra lỗi. Vui lòng thử lại.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#f8f9fb] text-[#191c1e]">
@@ -58,10 +87,11 @@ export function AuditWorkspace() {
                     />
                     <hr className="border-[#c3c6d6]/50" />
                     <div className="pt-3">
-                      <Button className="w-full" disabled={!canStartAudit} type="button">
+                      <Button className="w-full" disabled={!canStartAudit} isLoading={isSubmitting || isUploading} onClick={startAudit} type="button">
                         <PlayIcon />
-                        Bắt đầu đối soát
+                        {isUploading ? "Đang tải file lên..." : isSubmitting ? "Đang khởi tạo..." : "Bắt đầu đối soát"}
                       </Button>
+                      {error && <p className="mt-3 text-center text-xs leading-5 text-[#ba1a1a]" role="alert">{error}</p>}
                       <p className="mt-3 flex items-start justify-center gap-1.5 text-center text-xs leading-5 text-[#434654]">
                         <InfoIcon className="mt-0.5 size-3.5 shrink-0" />
                         Yêu cầu chọn lĩnh vực và tải file trước khi bắt đầu.
