@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import {
   DatabaseIcon,
   HelpIcon,
@@ -7,10 +9,10 @@ import {
 } from "@/components/core/icons";
 
 const navigation = [
-  { icon: HomeIcon, label: "Audit Workspace", id: "workspace" },
-  { icon: DatabaseIcon, label: "Master Data Management", id: "master-data" },
-  { icon: HistoryIcon, label: "History", id: "history" },
-  { icon: SettingsIcon, label: "Settings", id: "settings" },
+  { href: "/audit", icon: HomeIcon, label: "Audit Workspace", id: "workspace" },
+  { href: "/master-data", icon: DatabaseIcon, label: "Master Data Management", id: "master-data" },
+  { href: "/audit/results", icon: HistoryIcon, label: "History", id: "history" },
+  { href: "/settings", icon: SettingsIcon, label: "Settings", id: "settings" },
 ];
 
 type AuditSidebarProps = {
@@ -25,20 +27,21 @@ export function AuditSidebar({ activeItem = "workspace" }: AuditSidebarProps) {
         <p className="mt-1 text-xs uppercase tracking-[0.12em] text-[#434654]">Industrial Auditing</p>
       </div>
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3" aria-label="Điều hướng chính">
-        {navigation.map(({ icon: Icon, id, label }) => {
+        {navigation.map(({ href, icon: Icon, id, label }) => {
           const isActive = id === activeItem;
 
           return (
-          <button
-            className={isActive
-              ? "flex items-center gap-3 rounded-r px-3 py-3 text-left text-xs font-semibold text-[#00734c] ring-1 ring-inset ring-[#82f9be]"
-              : "ml-1 flex items-center gap-3 rounded px-3 py-3 text-left text-xs font-semibold text-[#434654] transition hover:bg-[#e7e8ea] hover:text-[#191c1e]"}
-            key={label}
-            type="button"
-          >
-            <Icon className="size-5" />
-            {label}
-          </button>
+            <Link
+              aria-current={isActive ? "page" : undefined}
+              className={isActive
+                ? "flex items-center gap-3 rounded-r px-3 py-3 text-left text-xs font-semibold text-[#00734c] ring-1 ring-inset ring-[#82f9be]"
+                : "ml-1 flex items-center gap-3 rounded px-3 py-3 text-left text-xs font-semibold text-[#434654] transition hover:bg-[#e7e8ea] hover:text-[#191c1e]"}
+              href={href}
+              key={label}
+            >
+              <Icon className="size-5" />
+              {label}
+            </Link>
           );
         })}
       </nav>
